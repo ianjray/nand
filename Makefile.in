@@ -1,0 +1,37 @@
+.POSIX:
+.SUFFIXES:
+.SUFFIXES: .cpp .o
+
+VERSION    = 1.0.0
+
+CXX        = @CXX@
+CFLAGS     = @CFLAGS@
+CFLAGS_SAN = @CFLAGS_SAN@
+
+.PHONY: all
+all: test_nand computer
+
+.cpp.o:
+	$(CXX) $(CFLAGS) $(CFLAGS_SAN) -c $< -o $@
+
+test_nand: test_nand.o connector.o gateif.o
+	$(CXX) $(CFLAGS) $(CFLAGS_SAN) $^ -o $@
+	./$@
+
+computer: computer.o connector.o gateif.o
+	$(CXX) $(CFLAGS) $(CFLAGS_SAN) $^ -o $@
+	./$@ > actual
+	diff -wup expected actual
+
+.PHONY: clean
+clean:
+	rm -rf test_nand computer *.o actual
+
+.PHONY: distclean
+distclean: clean
+	rm -f Makefile config.status
+
+test_nand.o: test_nand.cpp nand.cpp connector.h gateif.h signal.h
+computer.o: computer.cpp nand.cpp connector.h gateif.h signal.h
+connector.o: connector.cpp connector.h gateif.h signal.h
+gateif.o: gateif.cpp gateif.h
